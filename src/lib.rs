@@ -419,13 +419,37 @@ pub fn solve_eo(c:u64,e:u64)->Vec<u8>{
 
 }
 
-pub fn solve_eo_from_scrm(scram:String)->Vec<u8>{
+pub fn solve_eo_from_scrm(scram:String)->String{
     let startc: u64 = 247132686368;
     let starte: u64 = 407901468851537952;
     let (c,e) = do_scramble(scram,startc,starte);
     let eo_sol = solve_eo(c,e); 
-    return eo_sol;
+    let mut stuff_str = String::new();
+    for imove in &eo_sol{
+        stuff_str.push_str(match imove {
+            1 => "R ", 
+            2 => "L ", 
+            3 => "U ", 
+            4 => "D ", 
+            5 => "F ", 
+            6 => "B ", 
+            11 => "R2 ", 
+            12 => "L2 ", 
+            13 => "U2 ", 
+            14 => "D2 ", 
+            15 => "F2 ", 
+            16 => "B2 ", 
+            21 => "R' ", 
+            22 => "L' ", 
+            23 => "U' ", 
+            24 => "D' ", 
+            25 => "F' ", 
+            26 => "B' ", 
+                _ => unreachable!()
+            })
+    }
+    // println!("{:?}",stuff_str);
+    
+    return stuff_str;
     // println!("{:?}",eo_sol);
-
 }
-
