@@ -13,14 +13,14 @@ enum Msg {
 struct Scrmm{
     // link: ComponentLink<Self>,
     scram:String,
-    sol: Vec<u8>
+    sol: String
 }
 
 impl Component for Scrmm{
     type Message =  Msg;
     type Properties = ();
     fn create(_ctx: &Context<Self>) -> Self{
-        Self {scram: "U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2".to_string(), sol: Vec::new()}
+        Self {scram: "U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2".to_string(), sol: String::from("")}
     }
 
     fn update(&mut self,_ctx: &Context<Self>, msg: Self::Message) -> bool {
@@ -44,7 +44,7 @@ impl Component for Scrmm{
                 <button onclick={
                     println!("attempt1");
                     link.callback(|_| Msg::Solve)}>{ "Solve" }</button>
-                <p>{ format!("{:?}",self.sol)}</p>
+                <p>{ format!("EO solution: {}",self.sol)}</p>
             </div>
 
         }
