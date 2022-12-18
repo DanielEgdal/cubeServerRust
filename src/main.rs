@@ -5,6 +5,7 @@ use web_sys::HtmlTextAreaElement;
 use wasm_bindgen::JsCast;
 use rustservercube::*;
 use std::collections::HashMap;
+use gloo::console::log;
 
 enum Msg {
     InpScram(String),
@@ -32,7 +33,9 @@ impl Component for Scrmm{
                 
                 if self.to_dr_prune.is_empty(){
                     self.to_dr_prune = gen_eo_to_dr_prune();
+                    log!("prune generated");
                 }
+                log!("solver started");
                 self.sol = solve_eo_from_scrm(self.scram.clone(),&self.to_dr_prune);
             }
             
@@ -51,7 +54,7 @@ impl Component for Scrmm{
                     // oninput={link.callback(|event: InputData| Msg::InpScram(event))}>
                 </textarea>
                 <button onclick={
-                    println!("attempt1");
+                    // println!("attempt1");
                     link.callback(|_| Msg::Solve)}>{ "Solve" }</button>
                 <p>{ format!("EO+DR solution: {}",self.sol)}</p>
             </div>
