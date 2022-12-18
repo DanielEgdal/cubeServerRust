@@ -1,7 +1,8 @@
 use std::collections::VecDeque;
 use std::collections::HashSet;
+use std::collections::HashMap;
 
-type Cube = (u64, u64);
+// type Cube = (u64, u64);
 
 // #[inline(always)]
 pub fn swap5(k: u64, pos1: u8, pos2: u8) -> u64{
@@ -47,7 +48,7 @@ pub fn u(mut c:u64,mut e: u64)->(u64,u64){
     return (c,e);
 }
 
-pub fn up(mut c:u64,mut e: u64)->(u64,u64){
+pub fn up(mut c:u64, mut e: u64)->(u64,u64){
     let block1 = (c >> 20) & 31;
     let block2 = (c >> 25) & 31;
     let block3 = (c >> 30) & 31;
@@ -66,7 +67,7 @@ pub fn up(mut c:u64,mut e: u64)->(u64,u64){
     return (c,e);
 }
 
-pub fn u2(mut c:u64,mut e: u64)->(u64,u64){
+pub fn u2(c:u64, e: u64)->(u64,u64){
     // let nc =  swap5(swap5(swap5(c,20,25),30,35),20,35);
     // let ne =  swap5(swap5(swap5(e,40,45),55,50),40,55);
     let mut nc = swap5(c,20,35);
@@ -78,7 +79,7 @@ pub fn u2(mut c:u64,mut e: u64)->(u64,u64){
     return (nc,ne);
 }
 
-pub fn d(mut c:u64,mut e: u64)->(u64,u64){
+pub fn d(mut c:u64, mut e: u64)->(u64,u64){
     let block1 = (c) & 31;
     let block2 = (c >> 5) & 31;
     let block3 = (c >> 10) & 31;
@@ -116,7 +117,7 @@ pub fn dp(mut c:u64,mut e: u64)->(u64,u64){
     return (c,e);
 }
 
-pub fn d2(mut c:u64,mut e: u64)->(u64,u64){
+pub fn d2(c:u64, e: u64)->(u64,u64){
     // let nc =  swap5(swap5(swap5(c,20,25),30,35),20,35);
     // let ne =  swap5(swap5(swap5(e,40,45),55,50),40,55);
     let mut nc = swap5(c,0,15);
@@ -128,7 +129,7 @@ pub fn d2(mut c:u64,mut e: u64)->(u64,u64){
     return (nc,ne);
 }
 
-pub fn f2(mut c:u64,mut e: u64)->(u64,u64){
+pub fn f2(c:u64, e: u64)->(u64,u64){
     // let nc =  swap5(swap5(swap5(c,20,25),30,35),20,35);
     // let ne =  swap5(swap5(swap5(e,40,45),55,50),40,55);
     let mut nc = swap5(c,20,15);
@@ -140,7 +141,7 @@ pub fn f2(mut c:u64,mut e: u64)->(u64,u64){
     return (nc,ne);
 }
 
-pub fn l2(mut c:u64,mut e: u64)->(u64,u64){
+pub fn l2(c:u64, e: u64)->(u64,u64){
     // let nc =  swap5(swap5(swap5(c,20,25),30,35),20,35);
     // let ne =  swap5(swap5(swap5(e,40,45),55,50),40,55);
     let mut nc = swap5(c,35,15);
@@ -152,7 +153,7 @@ pub fn l2(mut c:u64,mut e: u64)->(u64,u64){
     return (nc,ne);
 }
 
-pub fn b2(mut c:u64,mut e: u64)->(u64,u64){
+pub fn b2(c:u64, e: u64)->(u64,u64){
     // let nc =  swap5(swap5(swap5(c,20,25),30,35),20,35);
     // let ne =  swap5(swap5(swap5(e,40,45),55,50),40,55);
     let mut nc = swap5(c,30,5);
@@ -164,7 +165,7 @@ pub fn b2(mut c:u64,mut e: u64)->(u64,u64){
     return (nc,ne);
 }
 
-pub fn r2(mut c:u64,mut e: u64)->(u64,u64){
+pub fn r2(c:u64, e: u64)->(u64,u64){
     // let nc =  swap5(swap5(swap5(c,20,25),30,35),20,35);
     // let ne =  swap5(swap5(swap5(e,40,45),55,50),40,55);
     let mut nc = swap5(c,10,30);
@@ -348,7 +349,7 @@ pub fn perform_move(movee: u8, c: u64, e: u64) -> (u64, u64) {
     return (nc,ne)
 }
 
-pub fn do_scramble(scramble:String, mut c:u64, mut e:u64) -> (u64, u64){
+pub fn do_scramble(scramble:String, mut c:u64, mut e:u64) -> (u64, u64,Vec<u8>){
 // pub fn do_scramble(c:u64,e:u64)->(u64,u64){
     // let mut move_int =HashMap::new();
     
@@ -376,11 +377,11 @@ pub fn do_scramble(scramble:String, mut c:u64, mut e:u64) -> (u64, u64){
         }).collect();
 
     // println!("{:?}",split_scramble);
-    for movei in split_scramble{
-        (c, e) = perform_move(movei, c, e);
+    for movei in &split_scramble{
+        (c, e) = perform_move(*movei, c, e);
         // println!("{:?} {:?} {:?}",movei,c,e)
     }
-    return (c,e);
+    return (c,e,split_scramble);
 }
 
 pub fn check_eo(e: u64) -> (bool, u64){
@@ -419,13 +420,101 @@ pub fn solve_eo(c:u64,e:u64)->Vec<u8>{
 
 }
 
-pub fn solve_eo_from_scrm(scram:String)->String{
+pub fn gen_eo_to_dr_prune()->HashMap<(u64,u64),Vec<u8>>{
+    let e:u64 = 532021248000; 
+    let c: u64 = 248276819175;
+    let moves:Vec<u8> = vec![1, 2, 3, 4, 11, 12, 13, 14, 15, 16, 21, 22, 23, 24];
+    let mut q:VecDeque<(u64, u64, Vec<u8>)> = VecDeque::new();
+    let mut overview = HashMap::new();
+    q.push_back((c,e,Vec::new()));
+    let mut continuee = true;
+    while !q.is_empty() && continuee{
+        let (nc, ne, nlist) = q.pop_front().expect("while loop should never trigger an error");
+        for movee in &moves{
+            let (nnc, nne )= perform_move(*movee, nc, ne);
+            let mut nnlist = nlist.to_owned();
+            nnlist.push(*movee);
+            if !overview.contains_key(&(nnc,nne)){
+                overview.insert((nnc,nne),nnlist.clone());
+            }
+            if nnlist.len() > 7{
+                continuee = false;
+            }
+        }
+    }
+    overview
+}
+
+pub fn mk_inv(sol: &Vec<u8>)->Vec<u8>{
+    let mut reverse_sol = Vec::new();
+    for movee in sol.iter().rev(){
+        if *movee < 10{
+            reverse_sol.push(*movee + 20);
+        }
+        else if *movee > 20{
+            reverse_sol.push(*movee - 20);
+        }
+        else{
+            reverse_sol.push(*movee);
+        }
+        
+    }
+    reverse_sol
+
+}
+
+pub fn solve_dr(scramble: Vec<u8>,mut eo_sol: Vec<u8>,prune:&HashMap<(u64,u64),Vec<u8>>)->Vec<u8>{
+    let mut e:u64 = 532021248000; 
+    let mut c:u64 = 248276819175;
+    for movee in &scramble{
+        (c, e )= perform_move(*movee, c, e);
+    }
+    for movee in &eo_sol{
+        (c, e )= perform_move(*movee, c, e);
+    }
+    let moves:Vec<u8> = vec![1, 2, 3, 4, 11, 12, 13, 14, 15, 16, 21, 22, 23, 24];
+    let mut q:VecDeque<(u64, u64, Vec<u8>)> = VecDeque::new();
+
+    let mut visited: HashSet <u64> = HashSet::new();
+    // Missing check for if EO is already solved before starting
+    q.push_back((c,e,Vec::new()));
+    while let Some((nc, ne, nlist)) = q.pop_front() {
+        
+        for movee in &moves{
+            let (nnc, nne )= perform_move(*movee, nc, ne);
+            let eo_state = check_eo(nne);
+            let mut nnlist = nlist.to_owned();
+            nnlist.push(*movee);
+            if prune.contains_key(&(nnc,nne)){
+                // println!("triggered {}",eo_state.0);
+                let solution = prune.get(&(nnc,nne)).expect("Already checked that this value is in the hashmap");
+                nnlist.extend(&mk_inv(solution));
+                eo_sol.extend(nnlist);
+                return eo_sol;
+
+            }
+            else{
+                q.push_back((nnc,nne,nnlist));
+                visited.insert(eo_state.1);
+                }
+            }
+
+    }
+    unreachable!()
+}
+    
+
+
+
+pub fn solve_eo_from_scrm(scram:String,prune:&HashMap<(u64, u64), Vec<u8>>)->String{
     let startc: u64 = 247132686368;
     let starte: u64 = 407901468851537952;
-    let (c,e) = do_scramble(scram,startc,starte);
+    let (c,e,split_scramble) = do_scramble(scram,startc,starte);
     let eo_sol = solve_eo(c,e); 
+    // let prune = gen_eo_to_dr_prune();
+    let dr_sol = solve_dr(split_scramble, eo_sol, prune);
     let mut stuff_str = String::new();
-    for imove in &eo_sol{
+    for imove in &dr_sol{
         stuff_str.push_str(match imove {
             1 => "R ", 
             2 => "L ", 
