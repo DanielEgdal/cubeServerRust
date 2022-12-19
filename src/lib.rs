@@ -436,6 +436,8 @@ pub fn gen_eo_to_dr_prune()->HashMap<(u64,u64),Vec<u8>>{
             nnlist.push(*movee);
             if !overview.contains_key(&(nnc,nne)){
                 overview.insert((nnc,nne),nnlist.clone());
+                q.push_back((nnc,nne,nnlist.clone()));
+
             }
             if nnlist.len() > 7{
                 continuee = false;
