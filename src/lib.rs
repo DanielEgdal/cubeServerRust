@@ -344,6 +344,7 @@ pub fn perform_move(movee: u8, c: u64, e: u64) -> (u64, u64) {
         24 => dp(c,e),
         25 => fp(c,e),
         26 => bp(c,e),
+        0 => (c,e),
         _ => unreachable!()
     };
     return (nc,ne)
@@ -389,26 +390,26 @@ pub fn check_eo(e: u64) -> (bool, u64){
     (eo_state == 0, eo_state)
 }
 
-pub fn solve_eo(c:u64,e:u64)->Vec<u8>{
+pub fn solve_eo(c:u64,e:u64)->[u8;7]{
     let moves:Vec<u8> = vec![1, 2, 3, 4, 5, 6, 11, 12, 13, 14, 15, 16, 21, 22, 23, 24, 25, 26];
-    let mut q:VecDeque<(u64, u64, Vec<u8>)> = VecDeque::new();
+    let mut q:VecDeque<(u64, u64, [u8;7],u8)> = VecDeque::new();
     let mut visited: HashSet <u64> = HashSet::new();
     // Missing check for if EO is already solved before starting
-    q.push_back((c,e,Vec::new()));
-    while let Some((nc, ne, nlist)) = q.pop_front() {
+    q.push_back((c,e,[0;7],0));
+    while let Some((nc, ne, nlist,depth)) = q.pop_front() {
         
         for movee in &moves{
             let (nnc, nne )= perform_move(*movee, nc, ne);
             let eo_state = check_eo(nne);
             let mut nnlist = nlist.to_owned();
-            nnlist.push(*movee);
+            nnlist[depth as usize] = *movee;
             if eo_state.0{
                 // println!("triggered {}",eo_state.0);
                 return nnlist
             }
             else{
                 if !visited.contains(&eo_state.1){
-                    q.push_back((nnc,nne,nnlist));
+                    q.push_back((nnc,nne,nnlist,depth+1));
                     visited.insert(eo_state.1);
                 }
             }
@@ -516,7 +517,7 @@ pub fn solve_eo_from_scrm(scram:String,prune:&HashMap<(u64, u64), [u8;8]>)->Stri
     let (c,e,split_scramble) = do_scramble(scram,startc,starte);
     let eo_sol = solve_eo(c,e); 
     // let prune = gen_eo_to_dr_prune();
-    let dr_sol = solve_dr(split_scramble, eo_sol, prune);
+    let dr_sol = solve_dr(split_scramble, eo_sol.to_vec(), prune);
     let mut stuff_str = String::new();
     for imove in &dr_sol{
         stuff_str.push_str(match imove {
