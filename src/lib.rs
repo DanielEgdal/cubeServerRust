@@ -420,26 +420,27 @@ pub fn solve_eo(c:u64,e:u64)->Vec<u8>{
 
 }
 
-pub fn gen_eo_to_dr_prune()->HashMap<(u64,u64),Vec<u8>>{
+pub fn gen_eo_to_dr_prune()->HashMap<(u64,u64),[u8;8]>{
     let e:u64 = 532021248000; 
     let c: u64 = 248276819175;
     let moves:Vec<u8> = vec![1, 2, 3, 4, 11, 12, 13, 14, 15, 16, 21, 22, 23, 24];
-    let mut q:VecDeque<(u64, u64, Vec<u8>)> = VecDeque::new();
+    let mut q:VecDeque<(u64, u64, [u8;8],u8)> = VecDeque::new();
     let mut overview = HashMap::new();
-    q.push_back((c,e,Vec::new()));
+    q.push_back((c,e,[0;8],0));
     let mut continuee = true;
     while !q.is_empty() && continuee{
-        let (nc, ne, nlist) = q.pop_front().expect("while loop should never trigger an error");
+        let (nc, ne, nlist,depth) = q.pop_front().expect("while loop should never trigger an error");
         for movee in &moves{
             let (nnc, nne )= perform_move(*movee, nc, ne);
             let mut nnlist = nlist.to_owned();
-            nnlist.push(*movee);
-            if !overview.contains_key(&(nnc,nne)){
-                overview.insert((nnc,nne),nnlist.clone());
-                q.push_back((nnc,nne,nnlist.clone()));
-
+            nnlist[depth as usize] = *movee;
+            if depth+1 <= 7{
+                if !overview.contains_key(&(nnc,nne)){
+                    overview.insert((nnc,nne),nnlist.clone());
+                    q.push_back((nnc,nne,nnlist.clone(),depth+1));
+                }
             }
-            if nnlist.len() > 7{
+            else{
                 continuee = false;
             }
         }
@@ -447,25 +448,26 @@ pub fn gen_eo_to_dr_prune()->HashMap<(u64,u64),Vec<u8>>{
     overview
 }
 
-pub fn mk_inv(sol: &Vec<u8>)->Vec<u8>{
+pub fn mk_inv(sol: &[u8;8])->Vec<u8>{
     let mut reverse_sol = Vec::new();
     for movee in sol.iter().rev(){
-        if *movee < 10{
-            reverse_sol.push(*movee + 20);
+        if *movee >0{
+            if *movee < 10{
+                reverse_sol.push(*movee + 20);
+            }
+            else if *movee > 20{
+                reverse_sol.push(*movee - 20);
+            }
+            else{
+                reverse_sol.push(*movee);
+            }
         }
-        else if *movee > 20{
-            reverse_sol.push(*movee - 20);
-        }
-        else{
-            reverse_sol.push(*movee);
-        }
-        
     }
     reverse_sol
 
 }
 
-pub fn solve_dr(scramble: Vec<u8>,mut eo_sol: Vec<u8>,prune:&HashMap<(u64,u64),Vec<u8>>)->Vec<u8>{
+pub fn solve_dr(scramble: Vec<u8>,mut eo_sol: Vec<u8>,prune:&HashMap<(u64,u64),[u8;8]>)->Vec<u8>{
     let mut e:u64 = 532021248000; 
     let mut c:u64 = 248276819175;
     for movee in &scramble{
@@ -508,7 +510,7 @@ pub fn solve_dr(scramble: Vec<u8>,mut eo_sol: Vec<u8>,prune:&HashMap<(u64,u64),V
 
 
 
-pub fn solve_eo_from_scrm(scram:String,prune:&HashMap<(u64, u64), Vec<u8>>)->String{
+pub fn solve_eo_from_scrm(scram:String,prune:&HashMap<(u64, u64), [u8;8]>)->String{
     let startc: u64 = 247132686368;
     let starte: u64 = 407901468851537952;
     let (c,e,split_scramble) = do_scramble(scram,startc,starte);
