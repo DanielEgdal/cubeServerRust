@@ -394,7 +394,10 @@ pub fn solve_eo(c:u64,e:u64)->[u8;7]{
     let moves:Vec<u8> = vec![1, 2, 3, 4, 5, 6, 11, 12, 13, 14, 15, 16, 21, 22, 23, 24, 25, 26];
     let mut q:VecDeque<(u64, u64, [u8;7],u8)> = VecDeque::new();
     let mut visited: HashSet <u64> = HashSet::new();
-    // Missing check for if EO is already solved before starting
+    let eo_state = check_eo(e);
+    if eo_state.0{
+        return [0;7]
+    }
     q.push_back((c,e,[0;7],0));
     while let Some((nc, ne, nlist,depth)) = q.pop_front() {
         
@@ -427,6 +430,7 @@ pub fn gen_eo_to_dr_prune()->HashMap<(u64,u64),[u8;8]>{
     let moves:Vec<u8> = vec![1, 2, 3, 4, 11, 12, 13, 14, 15, 16, 21, 22, 23, 24];
     let mut q:VecDeque<(u64, u64, [u8;8],u8)> = VecDeque::new();
     let mut overview = HashMap::new();
+    overview.insert((c,e),[0;8]);
     q.push_back((c,e,[0;8],0));
     let mut continuee = true;
     while !q.is_empty() && continuee{
@@ -477,6 +481,12 @@ pub fn solve_dr(scramble: Vec<u8>,mut eo_sol: Vec<u8>,prune:&HashMap<(u64,u64),[
     for movee in &eo_sol{
         (c, e )= perform_move(*movee, c, e);
     }
+    if prune.contains_key(&(c,e)){
+        let solution = prune.get(&(c,e)).expect("Already checked that this value is in the hashmap");
+        eo_sol.extend(&mk_inv(solution));
+        return eo_sol
+    }
+
     let moves:Vec<u8> = vec![1, 2, 3, 4, 11, 12, 13, 14, 15, 16, 21, 22, 23, 24];
     let mut q:VecDeque<(u64, u64, Vec<u8>)> = VecDeque::new();
 
@@ -508,18 +518,92 @@ pub fn solve_dr(scramble: Vec<u8>,mut eo_sol: Vec<u8>,prune:&HashMap<(u64,u64),[
     unreachable!()
 }
     
+pub fn gen_finish_prune()->HashMap<(u64,u64),[u8;8]>{
+    let c: u64 = 247132686368;
+    let e:u64 = 407901468851537952; 
+    let moves:Vec<u8> = vec![3, 4, 11, 12, 13, 14, 15, 16, 23, 24];
+    let mut q:VecDeque<(u64, u64, [u8;8],u8)> = VecDeque::new();
+    let mut overview = HashMap::new();
+    overview.insert((c,e),[0;8]);
+    q.push_back((c,e,[0;8],0));
+    let mut continuee = true;
+    while !q.is_empty() && continuee{
+        let (nc, ne, nlist,depth) = q.pop_front().expect("while loop should never trigger an error");
+        for movee in &moves{
+            let (nnc, nne )= perform_move(*movee, nc, ne);
+            let mut nnlist = nlist.to_owned();
+            nnlist[depth as usize] = *movee;
+            if depth+1 <= 7{
+                if !overview.contains_key(&(nnc,nne)){
+                    overview.insert((nnc,nne),nnlist.clone());
+                    q.push_back((nnc,nne,nnlist.clone(),depth+1));
+                }
+            }
+            else{
+                continuee = false;
+            }
+        }
+    }
+    overview
+}
+
+pub fn finish(scramble: Vec<u8>, mut dr_sol: Vec<u8>,prune:&HashMap<(u64,u64),[u8;8]>)->Vec<u8>{
+    let mut c:u64 = 247132686368;
+    let mut e:u64 = 407901468851537952; 
+    for movee in &scramble{
+        (c, e )= perform_move(*movee, c, e);
+    }
+    for movee in &dr_sol{
+        (c, e )= perform_move(*movee, c, e);
+    }
+    if prune.contains_key(&(c,e)){
+        let solution = prune.get(&(c,e)).expect("Already checked that this value is in the hashmap");
+        dr_sol.extend(&mk_inv(solution));
+        return dr_sol;
+    }
+    let moves:Vec<u8> = vec![3, 4, 11, 12, 13, 14, 15, 16, 23, 24];
+    let mut q:VecDeque<(u64, u64, Vec<u8>)> = VecDeque::new();
+
+    let mut visited: HashSet <u64> = HashSet::new();
+    // Missing check for if EO is already solved before starting
+    q.push_back((c,e,Vec::new()));
+    while let Some((nc, ne, nlist)) = q.pop_front() {
+        
+        for movee in &moves{
+            let (nnc, nne )= perform_move(*movee, nc, ne);
+            let eo_state = check_eo(nne);
+            let mut nnlist = nlist.to_owned();
+            nnlist.push(*movee);
+            if prune.contains_key(&(nnc,nne)){
+                // println!("triggered {}",eo_state.0);
+                let solution = prune.get(&(nnc,nne)).expect("Already checked that this value is in the hashmap");
+                nnlist.extend(&mk_inv(solution));
+                dr_sol.extend(nnlist);
+                return dr_sol;
+
+            }
+            else{
+                q.push_back((nnc,nne,nnlist));
+                visited.insert(eo_state.1);
+                }
+            }
+
+    }
+    unreachable!()
+}
 
 
 
-pub fn solve_eo_from_scrm(scram:String,prune:&HashMap<(u64, u64), [u8;8]>)->String{
+pub fn solve_eo_from_scrm(scram:String,prune_dr:&HashMap<(u64, u64), [u8;8]>,prune_finish:&HashMap<(u64, u64), [u8;8]>)->String{
     let startc: u64 = 247132686368;
     let starte: u64 = 407901468851537952;
     let (c,e,split_scramble) = do_scramble(scram,startc,starte);
     let eo_sol = solve_eo(c,e); 
     // let prune = gen_eo_to_dr_prune();
-    let dr_sol = solve_dr(split_scramble, eo_sol.to_vec(), prune);
+    let dr_sol = solve_dr(split_scramble.clone(), eo_sol.to_vec(), prune_dr);
+    let finish_sol = finish(split_scramble,dr_sol.to_vec(), prune_finish);
     let mut stuff_str = String::new();
-    for imove in &dr_sol{
+    for imove in &finish_sol{
         stuff_str.push_str(match imove {
             1 => "R ", 
             2 => "L ", 
@@ -539,6 +623,7 @@ pub fn solve_eo_from_scrm(scram:String,prune:&HashMap<(u64, u64), [u8;8]>)->Stri
             24 => "D' ", 
             25 => "F' ", 
             26 => "B' ", 
+            0 => "",
                 _ => unreachable!()
             })
     }
